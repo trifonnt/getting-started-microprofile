@@ -1,27 +1,121 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>ws.ament.microprofile</groupId>
-    <artifactId>getting-started-microprofile</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.microprofile</groupId>
-            <artifactId>microprofile</artifactId>
-            <version>1.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>javax.persistence-api</artifactId>
-            <version>2.2</version>
-        </dependency>
-    </dependencies>
+	<groupId>ws.ament.microprofile</groupId>
+	<artifactId>getting-started-microprofile</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>war</packaging>
+
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<warfile.name>ROOT</warfile.name>
+
+		<!-- Plugins -->
+		<version.war.plugin>2.6</version.war.plugin>
+
+		<!-- App servers -->
+		<version.wildfly-swarm>2017.2.0</version.wildfly-swarm>
+		<version.payara>4.1.2.173</version.payara>
+		<version.payara.embedded>4.1.2.173.0.1</version.payara.embedded>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.eclipse.microprofile</groupId>
+			<artifactId>microprofile</artifactId>
+			<version>1.2</version>
+			<type>pom</type>
+			<!--scope>provided</scope -->
+		</dependency>
+		<dependency>
+			<groupId>javax.persistence</groupId>
+			<artifactId>javax.persistence-api</artifactId>
+			<version>2.2</version>
+		</dependency>
+
+		<!-- PAYARA -->
+		<dependency>
+			<groupId>fish.payara.extras</groupId>
+			<artifactId>payara-micro</artifactId>
+			<version>${version.payara}</version>
+		</dependency>
+		<dependency>
+			<groupId>fish.payara.extras</groupId>
+			<artifactId>payara-embedded-all</artifactId>
+			<version>${version.payara.embedded}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>${project.artifactId}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>${version.war.plugin}</version>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+					<attachClasses>true</attachClasses>
+					<archive>
+						<manifest>
+							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+						<manifestEntries>
+							<Date>${maven.build.timestamp}</Date>
+							<Specification-Title>${project.name}</Specification-Title>
+							<Specification-Version>${project.version}</Specification-Version>
+							<Specification-Vendor>${project.organization.name}</Specification-Vendor>
+							<Implementation-Title>${project.name}</Implementation-Title>
+							<Implementation-Version>${project.version}</Implementation-Version>
+							<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+						</manifestEntries>
+					</archive>
+					<!--<warName>${project.artifactId}</warName> -->
+					<warName>${warfile.name}</warName>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<dependencies>
+					<dependency>
+						<groupId>fish.payara.extras</groupId>
+						<artifactId>payara-microprofile</artifactId>
+						<version>1.0</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<id>payara-uber-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						<configuration>
+							<mainClass>fish.payara.micro.PayaraMicro</mainClass>
+							<arguments>
+								<argument>--noCluster</argument>
+								<argument>--autoBindHttp</argument>
+								<argument>--logo</argument>
+								<argument>--deploy</argument>
+								<argument>${basedir}/target/${warfile.name}.war</argument>
+								<argument>--outputUberJar</argument>
+								<argument>${basedir}/target/${project.artifactId}.jar</argument>
+							</arguments>
+							<includeProjectDependencies>false</includeProjectDependencies>
+							<includePluginDependencies>true</includePluginDependencies>
+							<executableDependency>
+								<groupId>fish.payara.extras</groupId>
+								<artifactId>payara-microprofile</artifactId>
+							</executableDependency>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>
